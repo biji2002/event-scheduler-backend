@@ -2,10 +2,14 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "dist/server.js",
-  "scripts": {
-    "dev": "ts-node-dev --respawn src/server.ts",
-    "seed": "ts-node src/seed.ts"
-  },
+ "scripts": {
+  "build": "tsc",
+  "start": "node dist/server.js",
+  "dev": "ts-node-dev --respawn src/server.ts",
+  "seed": "ts-node src/seed.ts",
+  "prisma": "prisma generate"
+}
+,
   "dependencies": {
     "@prisma/client": "^5.16.1",
     "bcrypt": "^5.1.0",
