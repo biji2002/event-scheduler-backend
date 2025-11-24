@@ -2,14 +2,13 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "dist/server.js",
- "scripts": {
-  "build": "tsc",
-  "start": "node dist/server.js",
-  "dev": "ts-node-dev --respawn src/server.ts",
-  "seed": "ts-node src/seed.ts",
-  "prisma": "prisma generate"
-}
-,
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn src/server.ts",
+    "seed": "ts-node src/seed.ts",
+    "prisma": "prisma generate"
+  },
   "dependencies": {
     "@prisma/client": "^5.16.1",
     "bcrypt": "^5.1.0",
@@ -20,7 +19,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.17",
-    "@types/node": "^20.0.0",
+    "@types/node": "^20.19.25",
     "prisma": "^5.16.1",
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
