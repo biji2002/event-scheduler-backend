@@ -8,15 +8,21 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const auth_1 = __importDefault(require("./routes/auth"));
 const events_1 = __importDefault(require("./routes/events"));
+const bookingRoutes_1 = __importDefault(require("./routes/bookingRoutes"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
-    origin: "http://localhost:3000",
+    origin: [
+        "http://localhost:3000",
+        "https://event-scheduler-delta.vercel.app",
+        "https://event-scheduler-git-master-bijis-projects-08a6abd4.vercel.app"
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
 app.use(express_1.default.json());
 app.use("/auth", auth_1.default);
 app.use("/events", events_1.default);
+app.use("/bookings", bookingRoutes_1.default);
 app.get("/", (req, res) => {
     res.json({ message: "Event Scheduler API running" });
 });

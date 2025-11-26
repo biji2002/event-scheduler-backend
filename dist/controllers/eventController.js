@@ -1,117 +1,141 @@
 "use strict";
+// backend/src/controllers/eventController.ts
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createEvent = createEvent;
-exports.getEvents = getEvents;
-exports.updateEvent = updateEvent;
-exports.deleteEvent = deleteEvent;
+exports.deleteEvent = exports.updateEvent = exports.createEvent = exports.getEvents = void 0;
 const prismaClient_1 = __importDefault(require("../prismaClient"));
-/* CREATE */
-async function createEvent(req, res) {
+/* ============================================================
+   GET ALL EVENTS  (ANY LOGGED-IN USER)
+   ============================================================ */
+const getEvents = async (req, res) => {
     try {
-        const { title, description, date, startMinute, endMinute } = req.body;
-        if (!req.user?.id) {
+        if (!req.user) {
             return res.status(401).json({ message: "Unauthorized" });
         }
-        if (!title || !date || startMinute == null || endMinute == null) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-        // ❌ End time must be after start time
-        if (endMinute <= startMinute) {
-            return res.status(400).json({
-                message: "End time must be later than start time",
-            });
-        }
-        // Normalize date (remove time)
-        const eventDay = new Date(date);
-        eventDay.setHours(0, 0, 0, 0);
-        //  Cannot create event in the past
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (eventDay < today) {
-            return res.status(400).json({
-                message: "Cannot create events in the past",
-            });
-        }
-        //  Check time collision
-        const overlapping = await prismaClient_1.default.event.findFirst({
-            where: {
-                date: eventDay,
-                AND: [
-                    { startMinute: { lt: endMinute } },
-                    { endMinute: { gt: startMinute } },
-                ],
+        const events = await prismaClient_1.default.event.findMany({
+            include: {
+                admin: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+                bookings: true,
             },
+            orderBy: { date: "asc" },
         });
-        if (overlapping) {
-            return res.status(409).json({
-                message: "Another event already exists during this time",
-            });
+        // frontend expects "organizer", not "admin"
+        const formatted = events.map((ev) => ({
+            ...ev,
+            organizer: ev.admin,
+        }));
+        return res.status(200).json(formatted);
+    }
+    catch (err) {
+        console.error("Get events error:", err);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+exports.getEvents = getEvents;
+/* ============================================================
+   CREATE EVENT  (ADMIN ONLY)
+   ============================================================ */
+const createEvent = async (req, res) => {
+    try {
+        if (!req.user || req.user.role !== "ADMIN") {
+            return res
+                .status(403)
+                .json({ message: "Only admins can create events" });
         }
-        // Create event
+        const { title, description, date, location, startTime, endTime } = req.body;
         const event = await prismaClient_1.default.event.create({
             data: {
                 title,
                 description,
-                date: eventDay,
-                startMinute,
-                endMinute,
-                createdById: req.user.id,
+                location,
+                createdBy: req.user.id,
+                date: new Date(date),
+                startTime: startTime ? new Date(startTime) : null,
+                endTime: endTime ? new Date(endTime) : null,
+            },
+            include: {
+                admin: {
+                    select: { id: true, name: true, email: true },
+                },
             },
         });
-        res.status(201).json(event);
-    }
-    catch (error) {
-        console.error("EVENT CREATE ERROR:", error);
-        res.status(500).json({ message: "Server error" });
-    }
-}
-/* GET */
-async function getEvents(req, res) {
-    try {
-        const events = await prismaClient_1.default.event.findMany({
-            orderBy: { date: "asc" },
+        return res.status(201).json({
+            ...event,
+            organizer: event.admin,
         });
-        res.json(events);
     }
-    catch (error) {
-        console.error("EVENT LIST ERROR:", error);
-        res.status(500).json({ message: "Server error" });
+    catch (err) {
+        console.error("Create event error:", err);
+        return res.status(500).json({ message: "Server error" });
     }
-}
-/* UPDATE */
-async function updateEvent(req, res) {
+};
+exports.createEvent = createEvent;
+/* ============================================================
+   UPDATE EVENT (ADMIN ONLY)
+   ============================================================ */
+const updateEvent = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { title, description, date, startMinute, endMinute } = req.body;
+        if (!req.user || req.user.role !== "ADMIN") {
+            return res
+                .status(403)
+                .json({ message: "Only admins can update events" });
+        }
+        const id = req.params.id;
+        const { title, description, date, location, startTime, endTime } = req.body;
         const updated = await prismaClient_1.default.event.update({
             where: { id },
             data: {
                 title,
                 description,
-                date: new Date(date),
-                startMinute,
-                endMinute,
+                location,
+                date: date ? new Date(date) : undefined,
+                startTime: startTime ? new Date(startTime) : undefined,
+                endTime: endTime ? new Date(endTime) : undefined,
+            },
+            include: {
+                admin: {
+                    select: { id: true, name: true, email: true },
+                },
             },
         });
-        res.json(updated);
+        return res.json({
+            ...updated,
+            organizer: updated.admin,
+        });
     }
-    catch (error) {
-        console.error("EVENT UPDATE ERROR:", error);
-        res.status(500).json({ message: "Server error" });
+    catch (err) {
+        console.error("Update event error:", err);
+        return res.status(500).json({ message: "Server error" });
     }
-}
-/* DELETE */
-async function deleteEvent(req, res) {
+};
+exports.updateEvent = updateEvent;
+/* ============================================================
+   DELETE EVENT (ADMIN ONLY)
+   ============================================================ */
+const deleteEvent = async (req, res) => {
     try {
-        const { id } = req.params;
-        await prismaClient_1.default.event.delete({ where: { id } });
-        res.json({ message: "Event deleted" });
+        if (!req.user || req.user.role !== "ADMIN") {
+            return res
+                .status(403)
+                .json({ message: "Only admins can delete events" });
+        }
+        const id = req.params.id;
+        await prismaClient_1.default.event.delete({
+            where: { id },
+        });
+        return res.json({ message: "Event deleted successfully" });
     }
-    catch (error) {
-        console.error("EVENT DELETE ERROR:", error);
-        res.status(500).json({ message: "Server error" });
+    catch (err) {
+        console.error("Delete event error:", err);
+        return res.status(500).json({ message: "Server error" });
     }
-}
+};
+exports.deleteEvent = deleteEvent;
