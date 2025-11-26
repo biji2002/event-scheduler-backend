@@ -1,37 +1,54 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+// Prisma Schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-
-  events Event[] @relation("UserEvents")
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role      @default(USER)
+  events    Event[]   @relation("UserEvents")   // events created by admin
+  bookings  Booking[] // events booked by user
+  createdAt DateTime  @default(now())
+}
 model Event {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
-  description String?
+  description String
   date        DateTime
-  startMinute Int
-  endMinute   Int
+  location    String?
+  createdBy   String?
+  admin       User?      @relation("UserEvents", fields: [createdBy], references: [id])
+  startTime   DateTime?   // temporarily optional
+  endTime     DateTime?   // temporarily optional
+   bookings    Booking[]
+  createdAt   DateTime  @default(now())
+}
 
-  createdBy   User     @relation("UserEvents", fields: [createdById], references: [id])
-  createdById String
-  createdAt   DateTime @default(now())
+
+
+
+
+model Booking {
+  id        String   @id @default(uuid())
+  userId    String
+  eventId   String
+
+  user      User     @relation(fields: [userId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 enum Role {
-  ADMIN
   USER
+  ADMIN
 }

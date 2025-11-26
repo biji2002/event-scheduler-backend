@@ -4,7 +4,7 @@
     "module": "CommonJS",
     "rootDir": "src",
     "outDir": "dist",
-    "types":["node"],
+    "types": ["node"],
     "esModuleInterop": true,
     "strict": false,
     "skipLibCheck": true,
@@ -13,5 +13,5 @@
     "moduleResolution": "node",
     "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "src/types/**/*.d.ts"]
 }
