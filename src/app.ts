@@ -9,9 +9,10 @@ const app = express();
 
 app.use(
   cors({
-   origin: [
+   origin:  [
       "http://localhost:3000",
-      "https://event-scheduler-delta.vercel.app",  // FIXED
+      "https://event-scheduler-delta.vercel.app",
+      "https://event-scheduler-git-master-bijis-projects-08a6abd4.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
