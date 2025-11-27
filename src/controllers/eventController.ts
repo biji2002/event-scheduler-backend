@@ -27,11 +27,10 @@ export const getEvents = async (req: AuthRequest, res: Response) => {
       orderBy: { date: "asc" },
     });
 
-    
-
-    // frontend expects "organizer", not "admin"
+    // return both admin and organizer (frontend uses organizer)
     const formatted = events.map((ev) => ({
       ...ev,
+      admin: ev.admin,
       organizer: ev.admin,
     }));
 
@@ -74,6 +73,7 @@ export const createEvent = async (req: AuthRequest, res: Response) => {
 
     return res.status(201).json({
       ...event,
+      admin: event.admin,
       organizer: event.admin,
     });
   } catch (err) {
@@ -115,6 +115,7 @@ export const updateEvent = async (req: AuthRequest, res: Response) => {
 
     return res.json({
       ...updated,
+      admin: updated.admin,
       organizer: updated.admin,
     });
   } catch (err) {
